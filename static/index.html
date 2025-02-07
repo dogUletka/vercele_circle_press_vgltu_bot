@@ -67,16 +67,16 @@
       status.textContent = `Загрузка ${file.name}...`;
 
       const formData = new FormData();
-      formData.append("video", file);
+      formData.append("file", file);
 
-      fetch("/upload", {
+      fetch("/upload/", {
         method: "POST",
         body: formData,
       })
       .then(response => response.json())
       .then(data => {
-        if (data.success) {
-          status.textContent = `Видео успешно загружено: ${data.fileUrl}`;
+        if (data.status === "uploaded") {
+          status.textContent = `Видео успешно загружено: ${data.filename}`;
         } else {
           status.textContent = "Ошибка при загрузке видео!";
         }
