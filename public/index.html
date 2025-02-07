@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Загрузить видео</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>Загрузите видео</h1>
+            <p class="subtitle">Выберите видео до 60 секунд, чтобы превратить его в кружок.</p>
+            <input type="file" id="videoInput" accept="video/*" hidden>
+            <label for="videoInput" class="upload-button">
+                <span id="uploadText">Выбрать видео</span>
+                <span id="uploadIcon">📁</span>
+            </label>
+            <div id="progressBar" class="progress-bar">
+                <div id="progress" class="progress"></div>
+            </div>
+            <button id="uploadButton" class="submit-button" disabled>Создать кружок</button>
+            <div id="status" class="status-message"></div>
+        </div>
+    </div>
+
+    <script>
+        const videoInput = document.getElementById('videoInput');
+        const uploadButton = document.getElementById('uploadButton');
+        const uploadText = document.getElementById('uploadText');
+        const uploadIcon = document.getElementById('uploadIcon');
+        const progressBar = document.getElementById('progressBar');
+        const progress = document.getElementById('progress');
+        const statusMessage = document.getElementById('status');
+
+        // Обработка выбора файла
+        videoInput.addEventListener('change', () => {
+            const file = videoInput.files[0];
+            if (file) {
+                if (file.size > 100 * 1024 * 1024) { // Ограничение на размер файла (100 МБ)
+                    statusMessage.innerText = "Файл слишком большой. Максимальный размер — 100 МБ.";
+                    statusMessage.style.color = "#ff4d4d";
+                    uploadButton.disabled = true;
+                    return;
+                }
+
+                if (file.type.startsWith('video/')) {
+                    uploadText.innerText = file.name;
+                    uploadIcon.innerText = "✔️";
+                    uploadButton.disabled = false;
+                    statusMessage.innerText = "";
+                } else {
+                    statusMessage.innerText = "Пожалуйста, выберите видеофайл.";
+                    statusMessage.style.color = "#ff4d4d";
+                    uploadButton.disabled = true;
+                }
+            }
+        });
+
+        // Обработка загрузки
+        uploadButton.addEventListener('click', async () => {
+            const file = videoInput.files[0];
+            if (!file) {
+                statusMessage.innerText = "Пожалуйста, выберите видео.";
+                statusMessage.style.color = "#ff4d4d";
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('video', file);
+
+            try {
+                uploadButton.disabled = true;
+                statusMessage.innerText = "Загрузка...";
+                statusMessage.style.color = "#333";
+
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    statusMessage.innerText = "Видео загружено! Обработка...";
+                    statusMessage.style.color = "#4CAF50";
+
+                    // Отправляем URL видео боту через WebApp
+                    Telegram.WebApp.sendData(JSON.stringify({ file_url: data.file_url }));
+                    Telegram.WebApp.close();
+                } else {
+                    throw new Error(data.message || "Ошибка при загрузке видео.");
+                }
+            } catch (error) {
+                statusMessage.innerText = error.message;
+                statusMessage.style.color = "#ff4d4d";
+                uploadButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
