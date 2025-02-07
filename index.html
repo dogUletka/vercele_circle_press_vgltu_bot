@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Загрузка видео</title>
+</head>
+<body>
+    <h2>Выберите видео</h2>
+    <input type="file" id="videoInput" accept="video/*">
+    <button id="uploadBtn">Загрузить</button>
+    <p id="status"></p>
+
+    <script>
+        document.getElementById("uploadBtn").addEventListener("click", async function () {
+            let fileInput = document.getElementById("videoInput");
+            if (fileInput.files.length === 0) {
+                alert("Выберите видео!");
+                return;
+            }
+
+            let file = fileInput.files[0];
+            let formData = new FormData();
+            formData.append("file", file);
+
+            let statusText = document.getElementById("status");
+            statusText.innerText = "Загрузка... 0%";
+
+            let xhr = new XMLHttpRequest();
+            xhr.open("POST", "https://your-bot-server.com/upload/", true);
+
+            xhr.upload.onprogress = function (event) {
+                let percent = Math.round((event.loaded / event.total) * 100);
+                statusText.innerText = `Загрузка... ${percent}%`;
+            };
+
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    statusText.innerText = "Видео загружено!";
+                    setTimeout(() => {
+                        window.Telegram.WebApp.close(); // Закрываем WebApp
+                    }, 1000);
+                } else {
+                    alert("Ошибка загрузки!");
+                }
+            };
+
+            xhr.send(formData);
+        });
+    </script>
+</body>
+</html>
