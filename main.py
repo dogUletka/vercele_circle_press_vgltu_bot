@@ -7,6 +7,7 @@ from aiogram.filters import CommandStart
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import HTMLResponse
 from moviepy import VideoFileClip
+import hypercorn.asyncio
 from aiofiles import open as aio_open
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -45,7 +46,7 @@ async def read_index():
 @dp.message(CommandStart())
 async def start_handler(message: types.Message):
     """Приветственное сообщение с кнопкой для WebApp"""
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[  
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Загрузить видео", web_app=WebAppInfo(url="http://localhost:8000"))]
     ])
     await message.answer("Привет! Нажми кнопку ниже, чтобы загрузить видео.", reply_markup=keyboard)
@@ -98,21 +99,15 @@ async def process_video(chat_id: int, filename: str):
     os.remove(output_path)
 
 
-# Запуск FastAPI сервера через hypercorn
-async def start_server():
-    from hypercorn.asyncio import serve
-    from hypercorn.config import Config
-
-    config = Config()
-    config.bind = ["0.0.0.0:8000"]
-
-    # Запуск FastAPI на hypercorn
-    await serve(app, config)
+# Запуск бота
+async def main():
+    logging.basicConfig(level=logging.INFO)
+    await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    # Запуск FastAPI сервера через hypercorn
+    # Запуск FastAPI сервера с Hypercorn
     import threading
 
-    threading.Thread(target=lambda: asyncio.run(start_server())).start()
-    asyncio.run(dp.start_polling(bot))
+    threading.Thread(target=lambda: hypercorn.asyncio.run(app, host="0.0.0.0", port=8000)).start()
+    asyncio.run(main())
