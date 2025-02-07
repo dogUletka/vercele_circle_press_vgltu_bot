@@ -7,14 +7,14 @@ from aiogram.filters import CommandStart
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import HTMLResponse
 from moviepy import VideoFileClip
-import aiofiles
+import uvicorn
+from aiofiles import open as aio_open
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import Request
 
 # Токен бота
 TOKEN = "7637754216:AAF5Ak9uDOk0Xjhtsy4Rc3W9dx1Meo7ZxMk"
 
-# Инициализация FastAPI
+# Запуск FastAPI
 app = FastAPI()
 
 # Настройка CORS
@@ -47,7 +47,7 @@ async def read_index():
 async def start_handler(message: types.Message):
     """Приветственное сообщение с кнопкой для WebApp"""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Загрузить видео", web_app=WebAppInfo(url="https://your-deployed-url.vercel.app/"))]
+        [InlineKeyboardButton(text="Загрузить видео", web_app=WebAppInfo(url="http://localhost:8000"))]
     ])
     await message.answer("Привет! Нажми кнопку ниже, чтобы загрузить видео.", reply_markup=keyboard)
 
@@ -76,7 +76,7 @@ async def upload_video(file: UploadFile = File(...)):
     """Принимает загруженное видео и сохраняет его"""
     input_path = os.path.join(TEMP_DIR, file.filename)
 
-    async with aiofiles.open(input_path, "wb") as f:
+    async with aio_open(input_path, "wb") as f:
         content = await file.read()
         await f.write(content)
 
@@ -106,8 +106,8 @@ async def main():
 
 
 if __name__ == "__main__":
+    # Запуск FastAPI сервера
     import threading
 
-    # Запуск FastAPI сервера на другом потоке
     threading.Thread(target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000)).start()
     asyncio.run(main())
