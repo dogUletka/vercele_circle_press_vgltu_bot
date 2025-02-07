@@ -47,7 +47,7 @@ async def read_index():
 async def start_handler(message: types.Message):
     """Приветственное сообщение с кнопкой для WebApp"""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Загрузить видео", web_app=WebAppInfo(url="http://localhost:8000"))]
+        [InlineKeyboardButton(text="Загрузить видео", web_app=WebAppInfo(url="https://vercelecirclepressvgltubot.vercel.app/"))]
     ])
     await message.answer("Привет! Нажми кнопку ниже, чтобы загрузить видео.", reply_markup=keyboard)
 
