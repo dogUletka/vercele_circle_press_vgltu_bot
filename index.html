@@ -1,116 +1,121 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Загрузить видео</title>
+    <title>Video Upload</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f1f1f1;
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+            min-height: 100vh;
+            text-align: center;
             flex-direction: column;
+            color: #333;
         }
 
         h1 {
-            color: #333;
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: #2c3e50;
         }
 
         .upload-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 30px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
         }
 
         input[type="file"] {
-            margin: 10px;
+            width: 100%;
             padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            margin: 20px 0;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            background-color: #f0f9ff;
+            font-size: 16px;
+            color: #555;
         }
 
         button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 12px 24px;
+            width: 100%;
+            padding: 15px;
             border: none;
-            border-radius: 5px;
+            background-color: #3498db;
+            color: white;
+            font-size: 18px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            transition: background-color 0.3s ease;
         }
 
         button:hover {
-            background-color: #45a049;
+            background-color: #2980b9;
         }
 
-        .status {
-            margin-top: 15px;
-            font-size: 16px;
-            color: #333;
+        #status {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #e74c3c;
         }
 
-        .status.processing {
-            color: #ffa500;
-        }
-
-        .status.completed {
-            color: #4CAF50;
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #7f8c8d;
         }
     </style>
 </head>
 <body>
-    <h1>Загрузите видео для конвертации в кружок</h1>
+
+    <h1>Upload Your Video</h1>
+
     <div class="upload-container">
-        <input type="file" id="videoFile" accept="video/*" />
-        <button onclick="uploadVideo()">Загрузить</button>
-        <div class="status" id="status"></div>
+        <form id="upload-form" enctype="multipart/form-data">
+            <input type="file" name="file" accept="video/*" required><br>
+            <button type="submit">Upload Video</button>
+        </form>
+        <div id="status"></div>
+    </div>
+
+    <div class="footer">
+        <p>Powered by Your Bot Name</p>
     </div>
 
     <script>
-        const statusElement = document.getElementById("status");
-
-        async function uploadVideo() {
-            const fileInput = document.getElementById("videoFile");
-            if (!fileInput.files.length) {
-                alert("Пожалуйста, выберите файл для загрузки.");
-                return;
-            }
-
-            const file = fileInput.files[0];
-            const formData = new FormData();
-            formData.append("file", file);
-
-            statusElement.textContent = "Загрузка видео...";
-            statusElement.classList.add("processing");
+        document.getElementById('upload-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = 'Uploading...';
 
             try {
-                const response = await fetch("/upload/", {
-                    method: "POST",
+                const response = await fetch('/upload/', {
+                    method: 'POST',
                     body: formData,
                 });
-
-                const result = await response.json();
-                if (result.status === "uploaded") {
-                    statusElement.textContent = "Видео успешно загружено!";
-                    statusElement.classList.remove("processing");
-                    statusElement.classList.add("completed");
-                    // Можно добавить логику для уведомления пользователя о завершении обработки
+                const data = await response.json();
+                if (data.status === 'uploaded') {
+                    statusElement.textContent = 'Upload successful: ' + data.filename;
                 } else {
-                    throw new Error("Ошибка загрузки видео.");
+                    statusElement.textContent = 'Error: ' + data.message;
                 }
             } catch (error) {
-                statusElement.textContent = "Ошибка при загрузке файла.";
-                statusElement.classList.remove("processing");
+                statusElement.textContent = 'Upload failed: ' + error.message;
             }
-        }
+        });
     </script>
 </body>
 </html>
