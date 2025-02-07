@@ -1,13 +1,15 @@
 import os
+import asyncio
+import logging
+from aiogram import Bot, Dispatcher, types
+from aiogram.types import FSInputFile, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.filters import CommandStart
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import HTMLResponse
-from fastapi.middleware.cors import CORSMiddleware
-from aiofiles import open as aio_open
 from moviepy import VideoFileClip
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import FSInputFile, InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram.filters import CommandStart
-import logging
+import aiofiles
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request
 
 # Токен бота
 TOKEN = "7637754216:AAF5Ak9uDOk0Xjhtsy4Rc3W9dx1Meo7ZxMk"
@@ -18,10 +20,10 @@ app = FastAPI()
 # Настройка CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Разрешаем доступ с любого источника
+    allow_origins=["*"],  # Разрешаем доступ с нашего локального фронтенда
     allow_credentials=True,
-    allow_methods=["*"],  # Разрешаем все методы
-    allow_headers=["*"],  # Разрешаем все заголовки
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Создаем объекты бота и диспетчера
@@ -36,11 +38,8 @@ os.makedirs(TEMP_DIR, exist_ok=True)
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
     """Отдает статический файл index.html"""
-    try:
-        with open("static/index.html", "r") as f:
-            return f.read()
-    except FileNotFoundError:
-        return "Index file not found. Please check your directory structure."
+    with open("static/index.html", "r") as f:
+        return f.read()
 
 
 # Обработчик команды /start
@@ -48,7 +47,7 @@ async def read_index():
 async def start_handler(message: types.Message):
     """Приветственное сообщение с кнопкой для WebApp"""
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Загрузить видео", web_app={"url": "https://vercelecirclepressvgltu-mjwwzw9cs-vadims-projects-86febb86.vercel.app/"})]
+        [InlineKeyboardButton(text="Загрузить видео", web_app=WebAppInfo(url="https://your-deployed-url.vercel.app/"))]
     ])
     await message.answer("Привет! Нажми кнопку ниже, чтобы загрузить видео.", reply_markup=keyboard)
 
@@ -77,7 +76,7 @@ async def upload_video(file: UploadFile = File(...)):
     """Принимает загруженное видео и сохраняет его"""
     input_path = os.path.join(TEMP_DIR, file.filename)
 
-    async with aio_open(input_path, "wb") as f:
+    async with aiofiles.open(input_path, "wb") as f:
         content = await file.read()
         await f.write(content)
 
@@ -105,10 +104,10 @@ async def main():
     logging.basicConfig(level=logging.INFO)
     await dp.start_polling(bot)
 
-# Для корректного запуска на Vercel
+
 if __name__ == "__main__":
     import threading
-    import uvicorn
 
+    # Запуск FastAPI сервера на другом потоке
     threading.Thread(target=lambda: uvicorn.run(app, host="0.0.0.0", port=8000)).start()
     asyncio.run(main())
