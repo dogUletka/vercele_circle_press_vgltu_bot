@@ -10,8 +10,8 @@ export default async (req, res) => {
         }
 
         // Проверка размера файла (максимум 500 МБ)
-        if (file.size > 500 * 1024 * 1024) {
-            return res.status(400).json({ success: false, message: 'Файл слишком большой. Максимальный размер — 500 МБ.' });
+        if (file.size > 100 * 1024 * 1024) {
+            return res.status(400).json({ success: false, message: 'Файл слишком большой. Максимальный размер — 100 МБ.' });
         }
 
         // Проверка типа файла
